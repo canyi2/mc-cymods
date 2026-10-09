@@ -44,6 +44,17 @@
   .btn.green { background: #16a34a; border-color: #16a34a; color: #fff; }
   .btn.green:hover:not(:disabled) { background: #15803d; border-color: #15803d; }
 
+  .btn.purple {
+    padding: 5px 14px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    background: #7c3aed;
+    border: 1px solid #7c3aed;
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn.purple:hover:not(:disabled) { background: #6d28d9; border-color: #6d28d9; }
+
   .status { min-height: 20px; margin-top: 12px; font-size: 13px; color: #8b93a7; word-break: break-all; }
   .status.warn { color: #f5a524; }
   .status.ok { color: #4ade80; }
@@ -56,16 +67,19 @@
   .panel-title { font-size: 12px; color: #8b93a7; letter-spacing: .8px; text-transform: uppercase; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  /* 通用 chip：类型按钮用 button.chip，分类用 div.chip（因为要内嵌删除按钮） */
   .chip {
     padding: 6px 13px; border-radius: 999px; border: 1px solid #2a2f3a;
     background: #1b1f28; color: #b6bdcb; cursor: pointer; font-size: 13px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     transition: .15s;
+    display: inline-flex; align-items: center; gap: 4px;
+    line-height: 1.4;
+    user-select: none;
   }
   .chip:hover { border-color: #3f4a5e; color: #e6e8ee; }
   .chip.on { background: #16291f; border-color: #2f7a52; color: #6ee7a8; }
-
-  /* 集合（自定义分类）按钮：紫色调，与类型按钮区分 */
   .chip.collection {
     background: #1c1a2e;
     border-color: #3a2d6b;
@@ -78,12 +92,26 @@
     color: #e9d5ff;
     box-shadow: 0 0 0 1px #8b5cf6 inset;
   }
+  /* 分类 chip 内的小 x 删除按钮 */
+  .chip-x {
+    width: 14px; height: 14px;
+    border: none; background: transparent;
+    color: inherit; opacity: .55;
+    cursor: pointer;
+    font-size: 13px; line-height: 1;
+    padding: 0; border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: none;
+    font-family: inherit;
+    transition: .12s;
+  }
+  .chip-x:hover { opacity: 1; background: rgba(255,255,255,.12); color: #fca5a5; }
+
   .chip-sep {
     width: 1px; align-self: stretch; min-height: 22px;
     background: #2a2f3a; margin: 0 2px;
   }
 
-  /* ==== 布局工具栏 ==== */
   .toolbar {
     display: flex; align-items: center; gap: 10px;
     margin-top: 18px; flex-wrap: wrap;
@@ -101,7 +129,6 @@
   .seg-btn:hover { background: #232833; color: #e6e8ee; }
   .seg-btn.on { background: #2563eb; color: #fff; }
 
-  /* ==== 搜索框 ==== */
   .search-wrap {
     display: flex; align-items: center; gap: 6px;
     margin-left: auto;
@@ -115,7 +142,6 @@
   .search-input:focus { border-color: #2563eb; }
   .search-input::placeholder { color: #5f6779; }
 
-  /* ==== 其他版本输入 ==== */
   .custom-keys {
     display: flex; align-items: center; gap: 8px;
   }
@@ -130,7 +156,6 @@
   .ck-input:focus { border-color: #2563eb; }
   .ck-input::placeholder { color: #5f6779; font-family: inherit; }
 
-  /* ==== 卡片模式 ==== */
   .mods {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
@@ -174,11 +199,19 @@
   }
   .del:hover { background: #2a1a1a; color: #f16a6a; }
 
-  /* ==== 链接按钮行 ==== */
-  .link-row {
+  .card-action-row {
     display: flex; gap: 6px; flex-wrap: wrap;
-    margin-top: 10px;
+    margin-top: 10px; align-items: center;
   }
+
+  .row-action-row {
+    display: flex; gap: 5px; flex-wrap: wrap;
+    align-items: center;
+    flex: none;
+    max-width: 46%;
+    justify-content: flex-end;
+  }
+
   .link-btn {
     display: inline-flex; align-items: center;
     padding: 3px 10px; border-radius: 6px;
@@ -192,6 +225,41 @@
   .link-btn.modrinth:hover { background: #16321f; border-color: #22c55e; color: #bbf7d0; }
   .link-btn.wiki { color: #93c5fd; border-color: #1e3a8a; background: #0f1e3d; }
   .link-btn.wiki:hover { background: #16244a; border-color: #3b82f6; color: #bfdbfe; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 4px 2px 8px; border-radius: 6px;
+    background: #2d1e60; border: 1px solid #4c3599;
+    color: #ddd6fe; font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    max-width: 100%;
+  }
+  .tag.on { background: #3d2980; border-color: #8b5cf6; }
+  /* 固定分类的标签：无删除按钮，只有文字 */
+  .tag.no-remove {
+    padding: 2px 8px;
+    cursor: default;
+  }
+  .tag > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag-x {
+    width: 14px; height: 14px;
+    border: none; background: transparent;
+    color: #a78bfa; cursor: pointer;
+    font-size: 12px; line-height: 1;
+    padding: 0; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-family: inherit;
+  }
+  .tag-x:hover { background: #4c3599; color: #fca5a5; }
+
+  .add-tag {
+    padding: 2px 8px; border-radius: 6px;
+    border: 1px dashed #3a2d6b; background: transparent;
+    color: #8b7cc7; cursor: pointer;
+    font-size: 11px; transition: .12s; font-family: inherit;
+  }
+  .add-tag:hover { border-color: #8b5cf6; color: #c4b5fd; }
 
   .rows { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
   .rows-label { font-size: 11px; color: #5f6779; margin-bottom: 3px; letter-spacing: .4px; }
@@ -215,7 +283,6 @@
   .vtype.alpha { background: #33161a; color: #f16a6a; }
   .vdate { color: #5f6779; font-size: 11px; }
 
-  /* ==== 列表模式 ==== */
   .mods.list {
     display: flex; flex-direction: column;
     gap: 6px; margin-top: 12px;
@@ -247,12 +314,9 @@
   }
   .row-sub .err { color: #f16a6a; }
 
-  .row-links { display: flex; gap: 4px; flex: none; }
-  .row-links .link-btn { padding: 2px 8px; font-size: 11px; }
-
   .row-keys {
     display: flex; gap: 4px; flex-wrap: wrap;
-    max-width: 42%; justify-content: flex-end;
+    max-width: 38%; justify-content: flex-end;
     max-height: 52px; overflow: hidden;
   }
   .key {
@@ -265,9 +329,7 @@
   }
   .key:hover { border-color: #3f4a5e; color: #e6e8ee; }
   .key.on { background: #16291f; border-color: #2f7a52; color: #6ee7a8; }
-  .key.custom {
-    border-color: #1e3a8a; background: #0f1e3d; color: #93c5fd;
-  }
+  .key.custom { border-color: #1e3a8a; background: #0f1e3d; color: #93c5fd; }
   .key.custom:hover { border-color: #2563eb; color: #bfdbfe; }
   .key.custom.on { background: #16291f; border-color: #2f7a52; color: #6ee7a8; }
 
@@ -297,7 +359,6 @@
   .muted { color: #8b93a7; font-size: 13px; }
   input[type=checkbox] { accent-color: #22c55e; width: 15px; height: 15px; cursor: pointer; margin: 0; flex: none; }
 
-  /* ==== 弹窗 ==== */
   .modal-mask {
     position: fixed; inset: 0; background: rgba(0,0,0,.65);
     display: flex; align-items: center; justify-content: center;
@@ -342,6 +403,19 @@
     font-size: 11px; color: #cfd4e0;
   }
 
+  .coll-quick {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 4px;
+  }
+  .coll-quick-chip {
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid #3a2d6b; background: #1c1a2e;
+    color: #c4b5fd; cursor: pointer;
+    font-size: 12.5px; font-family: inherit;
+    transition: .12s;
+  }
+  .coll-quick-chip:hover { background: #252240; border-color: #5b3fb8; color: #ddd6fe; }
+
   @media (max-width: 620px) {
     .wrap { padding: 18px 12px; }
     .mods { grid-template-columns: 1fr; }
@@ -354,6 +428,7 @@
     .modal-row { grid-template-columns: 1fr; }
     .mods.list .item { flex-wrap: wrap; }
     .row-keys { max-width: 100%; justify-content: flex-start; }
+    .row-action-row { max-width: 100%; justify-content: flex-start; }
     .custom-keys { margin-left: 0; }
     .search-wrap { margin-left: 0; width: 100%; }
     .search-input { flex: 1; width: auto; }
@@ -365,7 +440,7 @@
 <div class="wrap">
   <h1>Mod / 光影 / 材质包 / 整合包 更新检查器</h1>
   <p class="hint">
-    粘贴 Modrinth 链接或 slug，自动识别类型：Mod / 材质包 / 整合包按 MC 版本展示，光影按 Iris / OptiFine 等加载器展示。勾选后批量下载或导出 .mrpack 整合包。
+    粘贴 Modrinth 链接或 slug，自动识别类型。勾选项目后点「+ 加入分类」即可创建自定义集合，导出 pack.json 时自动生成。分类总数上限 5 个。
   </p>
 
   <div class="add-row">
@@ -408,6 +483,9 @@
       <button class="seg-btn" data-layout="list">列表</button>
     </div>
 
+    <button id="batchTagBtn" class="btn purple" disabled
+            title="把当前勾选的项目加入某个分类">+ 加入分类</button>
+
     <div class="search-wrap">
       <input id="searchInput" class="search-input" type="text"
              placeholder="搜索项目名称 / slug" autocomplete="off">
@@ -436,7 +514,6 @@
   </div>
 </div>
 
-<!-- ==== 导出 .mrpack 弹窗 ==== -->
 <div id="exportModal" class="modal-mask" style="display:none;">
   <div class="modal">
     <h2>导出 .mrpack 整合包</h2>
@@ -491,6 +568,33 @@
   </div>
 </div>
 
+<div id="tagModal" class="modal-mask" style="display:none;">
+  <div class="modal" style="max-width: 420px;">
+    <h2>加入分类</h2>
+    <p class="sub" id="tagModalSub">把选中项目加入某个自定义分类。</p>
+
+    <div class="modal-field">
+      <label>新分类名（如 pvp、优化）</label>
+      <input id="tagNewInput" type="text" placeholder="输入分类名" autocomplete="off">
+    </div>
+
+    <div id="tagExistingWrap" style="display:none;">
+      <div style="font-size:12px;color:#8b93a7;margin-bottom:6px;">或选择已有分类：</div>
+      <div id="tagExistingList" class="coll-quick"></div>
+    </div>
+
+    <div class="modal-hint" style="margin-top:14px;">
+      分类会出现在顶部「项目类型 / 自定义分类」区域，点击即可只显示该分类下的项目。导出 pack.json 时会自动生成 <code>collections</code> 字段。<br>
+      分类总数上限 <b>5 个</b>。固定分类（由 <code>primary</code> 字段指定）的名称和内容只能在 pack.json 中手动修改。
+    </div>
+
+    <div class="modal-actions">
+      <button id="tagCancel" class="btn">取消</button>
+      <button id="tagConfirm" class="btn purple">加入</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 (() => {
@@ -498,12 +602,13 @@
 
   /* ============ 配置 ============ */
   const API = 'https://api.modrinth.com/v2';
-  const LS_KEY = 'mod-checker-v8';
+  const LS_KEY = 'mod-checker-v11';
   const MC_RE = /^\d+\.\d+(\.\d+)?$/;
   const RECENT_COUNT = 3;
   const SHADER_RECENT_COUNT = 10;
   const LIST_RECENT_COUNT = 3;
   const CUSTOM_SLOTS = 2;
+  const MAX_COLLECTIONS = 5;
 
   const TYPE_ORDER = { mod: 0, shader: 1, resourcepack: 2, modpack: 3 };
 
@@ -535,11 +640,13 @@
     selectedTypes: new Set(),
     layout: 'grid',
     customKeys: new Array(CUSTOM_SLOTS).fill(''),
-    collections: {},              // { name: Set<slug> }
-    activeCollection: null,       // null = 显示全部
+    collections: {},
+    activeCollection: null,
+    primaryCollection: null,
   };
   let store = { seen: {} };
   let searchKeyword = '';
+  let tagTargetSlugs = [];
 
   /* ============ 工具 ============ */
   const $ = id => document.getElementById(id);
@@ -659,6 +766,70 @@
     return container.childElementCount > 0;
   }
 
+  /* ============ 分类操作 ============ */
+  function isPrimaryCollection(name) {
+    return !!state.primaryCollection && name === state.primaryCollection;
+  }
+
+  function getCollectionsOf(slug) {
+    const out = [];
+    for (const [name, set] of Object.entries(state.collections)) {
+      if (set.has(slug)) out.push(name);
+    }
+    return out;
+  }
+
+  // 返回 { added, error }
+  // error: null | 'invalid' | 'full' | 'primary'
+  function addToCollection(slugs, name) {
+    const clean = String(name || '').trim();
+    if (!clean) return { added: 0, error: 'invalid' };
+
+    // 固定分类不能通过 UI 修改
+    if (isPrimaryCollection(clean)) {
+      return { added: 0, error: 'primary' };
+    }
+
+    const isNew = !state.collections[clean];
+    if (isNew && Object.keys(state.collections).length >= MAX_COLLECTIONS) {
+      return { added: 0, error: 'full' };
+    }
+
+    if (isNew) state.collections[clean] = new Set();
+
+    let added = 0;
+    for (const slug of slugs) {
+      if (!state.collections[clean].has(slug)) {
+        state.collections[clean].add(slug);
+        added++;
+      }
+    }
+    return { added, error: null };
+  }
+
+  function removeFromCollection(slug, name) {
+    // 固定分类不能通过 UI 移除
+    if (isPrimaryCollection(name)) return;
+    if (!state.collections[name]) return;
+
+    state.collections[name].delete(slug);
+    if (state.collections[name].size === 0) {
+      delete state.collections[name];
+      if (state.activeCollection === name) state.activeCollection = null;
+    }
+  }
+
+  function deleteCollection(name) {
+    if (isPrimaryCollection(name)) return;
+    if (!state.collections[name]) return;
+
+    delete state.collections[name];
+    if (state.activeCollection === name) state.activeCollection = null;
+    save();
+    render();
+    setStatus(`已删除分类「${name}」`, 'ok');
+  }
+
   /* ============ 数据处理 ============ */
   function buildProjectData(versions, projectType) {
     const sorted = versions.slice().sort(
@@ -702,15 +873,8 @@
   }
 
   /* ============ pack.json 解析与序列化 ============ */
-  // 支持：
-  //   1) 旧格式 ["sodium", ...]
-  //   2) 新格式 { mod:[], shader:[], resourcepack:[], modpack:[] }
-  //   3) 新格式 + collections: { 名称: { mod:[], shader:[], ... } }
   function parsePackJson(data) {
-    const result = {
-      items: [],
-      collections: {},
-    };
+    const result = { items: [], collections: {}, primary: null };
 
     function pushItem(slug, type) {
       if (typeof slug !== 'string' || !slug.trim()) return;
@@ -721,14 +885,11 @@
       for (const s of data) pushItem(s, null);
       return result;
     }
-
     if (!data || typeof data !== 'object') return result;
 
     for (const t of ['mod', 'shader', 'resourcepack', 'modpack']) {
       const arr = data[t];
-      if (Array.isArray(arr)) {
-        for (const s of arr) pushItem(s, t);
-      }
+      if (Array.isArray(arr)) for (const s of arr) pushItem(s, t);
     }
 
     if (data.collections && typeof data.collections === 'object' && !Array.isArray(data.collections)) {
@@ -749,8 +910,12 @@
             }
           }
         }
-        if (set.size > 0) result.collections[name] = set;
+        result.collections[name] = set;
       }
+    }
+
+    if (typeof data.primary === 'string' && data.primary.trim()) {
+      result.primary = data.primary.trim();
     }
 
     return result;
@@ -758,8 +923,6 @@
 
   function serializePackJson() {
     const grouped = { mod: [], shader: [], resourcepack: [], modpack: [] };
-
-    // 默认列表：按当前排序输出
     const ordered = sortMods(state.mods);
     for (const m of ordered) {
       const t = (m.type && grouped[m.type] !== undefined) ? m.type : 'mod';
@@ -773,15 +936,24 @@
       modpack: grouped.modpack,
     };
 
+    if (state.primaryCollection) {
+      out.primary = state.primaryCollection;
+    }
+
     if (Object.keys(state.collections).length > 0) {
-      // 建立 slug -> type 映射（用当前已加载数据）
       const typeOf = new Map();
       for (const m of state.mods) typeOf.set(m.slug, m.type);
 
       out.collections = {};
-      for (const [name, set] of Object.entries(state.collections)) {
+      const names = Object.keys(state.collections).sort((a, b) => {
+        if (isPrimaryCollection(a)) return -1;
+        if (isPrimaryCollection(b)) return 1;
+        return collator.compare(a, b);
+      });
+
+      for (const name of names) {
+        const set = state.collections[name];
         const cg = { mod: [], shader: [], resourcepack: [], modpack: [] };
-        // 按 slug 排序，稳定输出
         const slugs = [...set].sort();
         for (const slug of slugs) {
           const t = typeOf.get(slug);
@@ -803,6 +975,9 @@
         seen: store.seen,
         layout: state.layout,
         customKeys: state.customKeys,
+        collections: Object.fromEntries(
+          Object.entries(state.collections).map(([k, v]) => [k, [...v]])
+        ),
       }));
     } catch (e) { /* 忽略 */ }
   }
@@ -868,7 +1043,7 @@
     const el = $('typeList');
     el.innerHTML = '';
 
-    // 类型按钮
+    // 类型 chip（原样，button）
     for (const [key, meta] of Object.entries(TYPE_META)) {
       const c = document.createElement('button');
       c.className = 'chip' + (state.selectedTypes.has(key) ? ' on' : '');
@@ -878,16 +1053,14 @@
       el.appendChild(c);
     }
 
-    // 集合按钮
     const names = Object.keys(state.collections);
     if (names.length === 0) return;
 
-    // 分隔线
     const sep = document.createElement('span');
     sep.className = 'chip-sep';
     el.appendChild(sep);
 
-    // 「全部」
+    // 「全部」chip，无删除按钮
     const allChip = document.createElement('button');
     allChip.className = 'chip collection' + (state.activeCollection === null ? ' on' : '');
     allChip.textContent = '全部';
@@ -898,17 +1071,47 @@
     });
     el.appendChild(allChip);
 
-    // 各集合
-    for (const name of names) {
-      const c = document.createElement('button');
-      c.className = 'chip collection' + (state.activeCollection === name ? ' on' : '');
-      c.textContent = name;
-      c.title = `仅显示「${name}」分类内的项目（${state.collections[name].size} 项）`;
-      c.addEventListener('click', () => {
+    // 分类 chip（div，可含删除按钮）
+    // 固定分类排最前，其他按名称排序
+    const sortedNames = names.slice().sort((a, b) => {
+      if (isPrimaryCollection(a)) return -1;
+      if (isPrimaryCollection(b)) return 1;
+      return collator.compare(a, b);
+    });
+
+    for (const name of sortedNames) {
+      const isPrimary = isPrimaryCollection(name);
+
+      const chip = document.createElement('div');
+      chip.className = 'chip collection' + (state.activeCollection === name ? ' on' : '');
+      chip.title = isPrimary
+        ? `固定分类「${name}」（${state.collections[name].size} 项）· 只能在 pack.json 中修改`
+        : `点击筛选「${name}」（${state.collections[name].size} 项）`;
+
+      const label = document.createElement('span');
+      label.textContent = name;
+      chip.appendChild(label);
+
+      // 非固定分类显示删除按钮
+      if (!isPrimary) {
+        const x = document.createElement('button');
+        x.className = 'chip-x';
+        x.textContent = '×';
+        x.title = `删除分类「${name}」`;
+        x.addEventListener('click', ev => {
+          ev.stopPropagation();
+          deleteCollection(name);
+        });
+        chip.appendChild(x);
+      }
+
+      chip.addEventListener('click', ev => {
+        if (ev.target.closest('.chip-x')) return;
         state.activeCollection = (state.activeCollection === name) ? null : name;
         render();
       });
-      el.appendChild(c);
+
+      el.appendChild(chip);
     }
   }
 
@@ -1009,6 +1212,64 @@
     }
   }
 
+  // 生成标签 + 加分类按钮
+  // 固定分类：仅显示文字，不带删除按钮
+  function buildTags(slug, container, opts = {}) {
+    const addFirst = !!opts.addFirst;
+    const names = getCollectionsOf(slug).sort((a, b) => {
+      if (isPrimaryCollection(a)) return -1;
+      if (isPrimaryCollection(b)) return 1;
+      return collator.compare(a, b);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-tag';
+    addBtn.textContent = '+ 分类';
+    addBtn.title = '把这个项目加入分类';
+    addBtn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      openTagModal([slug]);
+    });
+
+    const tagEls = [];
+    for (const name of names) {
+      const isPrimary = isPrimaryCollection(name);
+      const tag = document.createElement('span');
+      tag.className = 'tag'
+        + (state.activeCollection === name ? ' on' : '')
+        + (isPrimary ? ' no-remove' : '');
+
+      const label = document.createElement('span');
+      label.textContent = name;
+      tag.appendChild(label);
+
+      // 固定分类不加删除按钮
+      if (!isPrimary) {
+        const x = document.createElement('button');
+        x.className = 'tag-x';
+        x.textContent = '×';
+        x.title = `从「${name}」移除`;
+        x.addEventListener('click', ev => {
+          ev.stopPropagation();
+          removeFromCollection(slug, name);
+          save();
+          render();
+        });
+        tag.appendChild(x);
+      }
+
+      tagEls.push(tag);
+    }
+
+    if (addFirst) {
+      container.appendChild(addBtn);
+      for (const el of tagEls) container.appendChild(el);
+    } else {
+      for (const el of tagEls) container.appendChild(el);
+      container.appendChild(addBtn);
+    }
+  }
+
   /* ---------- 卡片模式 ---------- */
   function buildGridItem(m) {
     const card = document.createElement('div');
@@ -1079,11 +1340,11 @@
 
     card.appendChild(head);
 
-    const linkRow = document.createElement('div');
-    linkRow.className = 'link-row';
-    if (buildLinkButtons(m, linkRow)) {
-      card.appendChild(linkRow);
-    }
+    const actionRow = document.createElement('div');
+    actionRow.className = 'card-action-row';
+    buildLinkButtons(m, actionRow);
+    buildTags(m.slug, actionRow, { addFirst: false });
+    card.appendChild(actionRow);
 
     const rows = document.createElement('div');
     rows.className = 'rows';
@@ -1185,11 +1446,11 @@
     main.appendChild(sub);
     item.appendChild(main);
 
-    const linkRow = document.createElement('div');
-    linkRow.className = 'row-links';
-    if (buildLinkButtons(m, linkRow)) {
-      item.appendChild(linkRow);
-    }
+    const actionRow = document.createElement('div');
+    actionRow.className = 'row-action-row';
+    buildTags(m.slug, actionRow, { addFirst: true });
+    buildLinkButtons(m, actionRow);
+    item.appendChild(actionRow);
 
     const keysWrap = document.createElement('div');
     keysWrap.className = 'row-keys';
@@ -1212,11 +1473,7 @@
         if (!v) continue;
         displayList.push({
           key,
-          entry: {
-            key,
-            version: v,
-            date: new Date(v.date_published),
-          },
+          entry: { key, version: v, date: new Date(v.date_published) },
           custom: true,
         });
         seen.add(key);
@@ -1271,6 +1528,7 @@
     $('selInfo').textContent = `已选 ${n} 个项目 · ${mcN} 个 MC 版本 · ${ldN} 个加载器`;
     $('downloadBtn').disabled = !(n && (mcN || ldN));
     $('exportBtn').disabled = !n;
+    $('batchTagBtn').disabled = n === 0;
 
     const allSel = visibleLoaded.length > 0 && visibleLoaded.every(m => state.selectedMods.has(m.slug));
     $('selectAll').checked = allSel;
@@ -1347,8 +1605,97 @@
     state.mods = state.mods.filter(m => m.slug !== slug);
     state.selectedMods.delete(slug);
     delete store.seen[slug];
+
+    // 从所有分类中移除（固定分类保留，即使为空）
+    for (const [name, set] of Object.entries(state.collections)) {
+      set.delete(slug);
+      if (set.size === 0 && !isPrimaryCollection(name)) {
+        delete state.collections[name];
+        if (state.activeCollection === name) state.activeCollection = null;
+      }
+    }
+
     save();
     render();
+  }
+
+  /* ============ 分类弹窗 ============ */
+  function openTagModal(slugs) {
+    if (!slugs || !slugs.length) {
+      setStatus('请先选择要加入分类的项目', 'warn');
+      return;
+    }
+    tagTargetSlugs = [...slugs];
+
+    $('tagModalSub').textContent =
+      `把 ${slugs.length} 个项目加入某个分类。分类总数上限 5 个。`;
+
+    $('tagNewInput').value = '';
+
+    // 已有分类：排除固定分类
+    const existing = Object.keys(state.collections)
+      .filter(n => !isPrimaryCollection(n))
+      .sort((a, b) => collator.compare(a, b));
+
+    const wrap = $('tagExistingWrap');
+    const list = $('tagExistingList');
+    list.innerHTML = '';
+    if (existing.length === 0) {
+      wrap.style.display = 'none';
+    } else {
+      wrap.style.display = 'block';
+      for (const name of existing) {
+        const c = document.createElement('button');
+        c.className = 'coll-quick-chip';
+        c.textContent = name;
+        c.title = `加入「${name}」`;
+        c.addEventListener('click', () => {
+          const r = addToCollection(tagTargetSlugs, name);
+          if (r.error === 'full') {
+            setStatus(`分类总数已达上限（${MAX_COLLECTIONS} 个）`, 'warn');
+            return;
+          }
+          if (r.error === 'primary') {
+            setStatus('固定分类不能通过 UI 修改', 'warn');
+            return;
+          }
+          save();
+          closeTagModal();
+          render();
+          setStatus(`已把 ${r.added} 个项目加入「${name}」`, 'ok');
+        });
+        list.appendChild(c);
+      }
+    }
+
+    $('tagModal').style.display = 'flex';
+    setTimeout(() => $('tagNewInput').focus(), 50);
+  }
+
+  function closeTagModal() {
+    $('tagModal').style.display = 'none';
+    tagTargetSlugs = [];
+  }
+
+  function confirmNewTag() {
+    const name = $('tagNewInput').value.trim();
+    if (!name) {
+      setStatus('请输入分类名', 'warn');
+      return;
+    }
+    const r = addToCollection(tagTargetSlugs, name);
+    if (r.error === 'full') {
+      setStatus(`分类总数已达上限（${MAX_COLLECTIONS} 个）`, 'warn');
+      return;
+    }
+    if (r.error === 'primary') {
+      setStatus('固定分类不能通过 UI 修改', 'warn');
+      return;
+    }
+    save();
+    closeTagModal();
+    render();
+    setStatus(`已把 ${r.added} 个项目加入「${name}」`, 'ok');
   }
 
   /* ============ 下载 ============ */
@@ -1676,11 +2023,26 @@
     renderFooter();
   });
 
+  $('batchTagBtn').addEventListener('click', () => {
+    const slugs = [...state.selectedMods];
+    if (!slugs.length) {
+      setStatus('请先勾选至少一个项目', 'warn');
+      return;
+    }
+    openTagModal(slugs);
+  });
+
   $('downloadBtn').addEventListener('click', doDownload);
   $('exportModsBtn').addEventListener('click', doExportModsJson);
   $('exportBtn').addEventListener('click', openExportModal);
   $('mrCancel').addEventListener('click', closeExportModal);
   $('mrConfirm').addEventListener('click', doExportMrpack);
+
+  $('tagCancel').addEventListener('click', closeTagModal);
+  $('tagConfirm').addEventListener('click', confirmNewTag);
+  $('tagNewInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmNewTag();
+  });
 
   document.querySelectorAll('.seg-btn').forEach(btn => {
     btn.addEventListener('click', () => setLayout(btn.dataset.layout));
@@ -1715,9 +2077,14 @@
     if (e.target === $('exportModal')) closeExportModal();
   });
 
+  $('tagModal').addEventListener('click', e => {
+    if (e.target === $('tagModal')) closeTagModal();
+  });
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && $('exportModal').style.display === 'flex') {
-      closeExportModal();
+    if (e.key === 'Escape') {
+      if ($('exportModal').style.display === 'flex') closeExportModal();
+      if ($('tagModal').style.display === 'flex') closeTagModal();
     }
   });
 
@@ -1739,7 +2106,14 @@
       input.value = state.customKeys[slot] || '';
     });
 
-    // 始终尝试读取 pack.json（获取 collections）
+    if (cfg && cfg.collections && typeof cfg.collections === 'object') {
+      for (const [name, arr] of Object.entries(cfg.collections)) {
+        if (Array.isArray(arr) && arr.length) {
+          state.collections[name] = new Set(arr);
+        }
+      }
+    }
+
     let packJsonData = null;
     try {
       const res = await fetch(PACK_JSON_URL, { cache: 'no-store' });
@@ -1748,12 +2122,19 @@
       console.warn('加载 pack.json 失败:', e);
     }
 
-    const parsed = packJsonData ? parsePackJson(packJsonData) : { items: [], collections: {} };
+    const parsed = packJsonData ? parsePackJson(packJsonData) : { items: [], collections: {}, primary: null };
 
-    // collections
-    state.collections = parsed.collections || {};
+    state.primaryCollection = parsed.primary || null;
 
-    // 项目列表来源：localStorage > pack.json > fallback
+    if (Object.keys(state.collections).length === 0 && Object.keys(parsed.collections).length > 0) {
+      state.collections = parsed.collections;
+    }
+
+    // 确保固定分类存在（即使为空）
+    if (state.primaryCollection && !state.collections[state.primaryCollection]) {
+      state.collections[state.primaryCollection] = new Set();
+    }
+
     let items = null;
 
     if (cfg && Array.isArray(cfg.slugs) && cfg.slugs.length) {
@@ -1766,7 +2147,6 @@
       items = FALLBACK_MODS.map(s => ({ slug: s, type: null }));
     }
 
-    // 合并 collections 里的 slug（保证分类下项目始终能被加载）
     if (Object.keys(state.collections).length > 0) {
       const map = new Map(items.map(it => [it.slug, it]));
       for (const set of Object.values(state.collections)) {

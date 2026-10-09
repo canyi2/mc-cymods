@@ -1,11 +1,43 @@
-[
-  "sodium",
-  "iris",
-  "lithium",
-  "fabric-api",
-  "modmenu",
-  "cloth-config",
-  "xk-redstone-display",
-  "complementary-reimagined",
-  "zombie-invade-100-days"
-]
+{
+  "mod": [
+    "appleskin",
+    "carpet-tis-addition",
+    "chat-heads",
+    "cloth-config",
+    "continuity",
+    "fabric-api",
+    "iris",
+    "lithium",
+    "modmenu",
+    "sodium"
+  ],
+  "shader": [
+    "complementary-reimagined"
+  ],
+  "resourcepack": [
+    "xk-redstone-display"
+  ],
+  "modpack": [
+    "zombie-invade-100-days"
+  ],
+
+  "collections": {
+    "inf": {
+      "mod": ["carpet-tis-addition",
+      "cloth-config",
+      "continuity",
+      "fabric-api",
+      "iris",
+      "lithium",
+      "modmenu",
+      "sodium"],
+      "shader": ["complementary-reimagined"],
+      "resourcepack": ["xk-redstone-display"],
+    "modpack": ["zombie-invade-100-days"]
+    },
+    "cy用": {
+      "mod": ["sodium", "iris"],
+      "resourcepack": ["xk-redstone-display"]
+    }
+}
+}

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mod 更新检查 &amp; 批量下载</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #0e1014;
+    color: #e6e8ee;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-bottom: 92px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px; }
+
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .3px; }
+  .hint { color: #8b93a7; margin: 0 0 18px; font-size: 13px; }
+
+  .add-row { display: flex; gap: 10px; }
+  .add-row input {
+    flex: 1; min-width: 0; padding: 11px 14px; border-radius: 10px;
+    border: 1px solid #262b36; background: #151821; color: #e6e8ee;
+    font-size: 14px; outline: none; transition: border-color .15s;
+  }
+  .add-row input::placeholder { color: #5f6779; }
+  .add-row input:focus { border-color: #2563eb; }
+
+  .btn {
+    padding: 10px 16px; border-radius: 10px; border: 1px solid #2a2f3a;
+    background: #1c2029; color: #cfd4e0; cursor: pointer; font-size: 14px;
+    transition: .15s; white-space: nowrap; font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { background: #232833; border-color: #38404f; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: #1d4ed8; border-color: #1d4ed8; }
+  .btn.big { padding: 12px 28px; font-size: 15px; font-weight: 600; }
+  .btn.tiny { padding: 3px 9px; font-size: 12px; border-radius: 7px; }
+  .btn.ghost { background: transparent; }
+
+  .status { min-height: 20px; margin-top: 12px; font-size: 13px; color: #8b93a7; word-break: break-all; }
+  .status.warn { color: #f5a524; }
+  .status.ok { color: #4ade80; }
+
+  .panel {
+    background: #151821; border: 1px solid #232833; border-radius: 14px;
+    padding: 14px 16px; margin-top: 18px;
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .panel-title { font-size: 12px; color: #8b93a7; letter-spacing: .8px; text-transform: uppercase; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 6px 13px; border-radius: 999px; border: 1px solid #2a2f3a;
+    background: #1b1f28; color: #b6bdcb; cursor: pointer; font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    transition: .15s;
+  }
+  .chip:hover { border-color: #3f4a5e; color: #e6e8ee; }
+  .chip.on { background: #16291f; border-color: #2f7a52; color: #6ee7a8; }
+
+  .mods {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 14px; margin-top: 18px;
+  }
+  .empty { grid-column: 1/-1; text-align: center; color: #5f6779; padding: 48px 0; font-size: 13px; }
+
+  .card {
+    position: relative; background: #151821; border: 1px solid #232833;
+    border-radius: 14px; padding: 14px; transition: .15s;
+  }
+  .card.selected { border-color: #2f7a52; box-shadow: 0 0 0 1px #2f7a52 inset; }
+  .card.has-update { border-color: #5c4110; }
+  .card.has-update.selected { border-color: #2f7a52; }
+
+  .card-head { display: flex; align-items: flex-start; gap: 11px; }
+  .icon {
+    width: 42px; height: 42px; border-radius: 9px; object-fit: cover;
+    flex: none; background: #222835;
+  }
+  .card-meta { flex: 1; min-width: 0; padding-right: 20px; }
+  .card-title {
+    font-weight: 600; font-size: 15px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-sub { font-size: 12px; color: #8b93a7; margin-top: 2px; }
+  .card-sub .err { color: #f16a6a; }
+
+  .badge {
+    align-self: center; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #3a2a0e; color: #f5a524; border: 1px solid #5c4110; white-space: nowrap;
+  }
+
+  .del {
+    position: absolute; top: 8px; right: 8px; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: #5a6273;
+    cursor: pointer; font-size: 18px; line-height: 1; border-radius: 7px;
+    transition: .15s;
+  }
+  .del:hover { background: #2a1a1a; color: #f16a6a; }
+
+  .rows { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .rows-label { font-size: 11px; color: #5f6779; margin-bottom: 3px; letter-spacing: .4px; }
+  .vrow {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 9px; border-radius: 8px; background: #1b1f28;
+    border: 1px solid transparent; cursor: pointer; font-size: 12.5px;
+    transition: .12s;
+  }
+  .vrow:hover { background: #212734; }
+  .vrow.on { background: #16291f; border-color: #2f7a52; }
+  .vmc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #cfd4e0; min-width: 60px;
+  }
+  .vrow.on .vmc { color: #6ee7a8; }
+  .vnum { flex: 1; color: #8b93a7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vtype { font-size: 10px; padding: 1px 6px; border-radius: 5px; }
+  .vtype.release { background: #16321f; color: #4ade80; }
+  .vtype.beta { background: #33290e; color: #f5a524; }
+  .vtype.alpha { background: #33161a; color: #f16a6a; }
+  .vdate { color: #5f6779; font-size: 11px; }
+
+  .bottombar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 22px;
+    background: rgba(14,16,20,.92);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #232833;
+  }
+  .bb-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .check { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; user-select: none; }
+  .muted { color: #8b93a7; font-size: 13px; }
+  input[type=checkbox] { accent-color: #22c55e; width: 15px; height: 15px; cursor: pointer; margin: 0; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 18px 12px; }
+    .mods { grid-template-columns: 1fr; }
+    .add-row { flex-wrap: wrap; }
+    .add-row input { flex: 1 1 100%; }
+    .bottombar { padding: 12px 14px; }
+    .btn.big { padding: 11px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Mod 更新检查器</h1>
+  <p class="hint">
+    粘贴 Modrinth 链接或 slug，打开页面时自动检查更新，列出最近 3 个 MC 版本（同版本只保留最新），勾选后批量下载。
+  </p>
+
+  <div class="add-row">
+    <input id="modInput" type="text" autocomplete="off"
+           placeholder="https://modrinth.com/mod/sodium  或直接输入 sodium">
+    <button id="addBtn" class="btn primary">添加</button>
+    <button id="refreshBtn" class="btn">↻ 刷新</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <span class="panel-title">MC 版本</span>
+      <button id="clearMc" class="btn tiny ghost">清空</button>
+    </div>
+    <div id="mcList" class="chips"></div>
+  </section>
+
+  <section id="modList" class="mods"></section>
+</div>
+
+<div class="bottombar">
+  <div class="bb-left">
+    <label class="check"><input type="checkbox" id="selectAll"> 全选</label>
+    <span id="selInfo" class="muted"></span>
+  </div>
+  <button id="downloadBtn" class="btn primary big" disabled>下载所选</button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ============ 配置 ============ */
+  const API = 'https://api.modrinth.com/v2';
+  const LS_KEY = 'mod-checker-v1';
+  const MC_RE = /^\d+\.\d+(\.\d+)?$/;          // 只保留正式 MC 版本，过滤快照
+  const RECENT_COUNT = 3;                       // 显示最近几个 MC 版本
+
+  // 首次打开时预置的 mod（可自行修改）
+  const DEFAULT_MODS = ['sodium', 'iris', 'lithium', 'fabric-api', 'modmenu', 'cloth-config'];
+
+  const PLACEHOLDER =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E" +
+    "%3Crect width='48' height='48' rx='10' fill='%23222835'/%3E%3C/svg%3E";
+
+  /* ============ 状态 ============ */
+  const state = {
+    mods: [],                 // { slug, status, proj, data, error, hasUpdate }
+    selectedMods: new Set(),  // slug
+    selectedMc: new Set(),    // "1.21.4"
+  };
+  let store = { seen: {} };   // { seen: { slug: { id, number } } }
+
+  /* ============ 工具 ============ */
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  // MC 版本号降序比较
+  function cmpMc(a, b) {
+    const pa = a.split('.').map(Number);
+    const pb = b.split('.').map(Number);
+    const n = Math.max(pa.length, pb.length);
+    for (let i = 0; i < n; i++) {
+      const x = pa[i] || 0, y = pb[i] || 0;
+      if (x !== y) return y - x;
+    }
+    return 0;
+  }
+
+  function setStatus(msg, type = '') {
+    const el = $('status');
+    el.textContent = msg;
+    el.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  async function api(path) {
+    const res = await fetch(API + path, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  /* ============ 数据处理 ============ */
+
+  // 把版本列表整理成：每个 MC 版本 => 最新的那个 mod 版本
+  function buildModData(versions) {
+    const sorted = versions.slice().sort(
+      (a, b) => new Date(b.date_published) - new Date(a.date_published)
+    );
+
+    const mcMap = new Map(); // mc -> version
+    for (const v of sorted) {
+      for (const mc of (v.game_versions || [])) {
+        if (!MC_RE.test(mc)) continue;
+        if (mcMap.has(mc)) continue;
+        mcMap.set(mc, v);
+      }
+    }
+
+    const entries = [...mcMap.entries()].map(([mc, v]) => ({
+      mc,
+      version: v,
+      date: new Date(v.date_published),
+    }));
+    // 最新的 MC 版本排在前面
+    entries.sort((a, b) => (b.date - a.date) || cmpMc(a.mc, b.mc));
+
+    return {
+      mcMap,
+      entries,
+      recent: entries.slice(0, RECENT_COUNT),
+      latest: sorted[0] || null,
+    };
+  }
+
+  function pickFile(version) {
+    if (!version || !version.files || !version.files.length) return null;
+    return version.files.find(f => f.primary) || version.files[0];
+  }
+
+  /* ============ 持久化 ============ */
+  function save() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        slugs: state.mods.map(m => m.slug),
+        seen: store.seen,
+      }));
+    } catch (e) { /* 忽略 */ }
+  }
+
+  /* ============ 加载 ============ */
+  async function loadMod(slug) {
+    const entry = state.mods.find(m => m.slug === slug);
+    if (!entry) return;
+
+    entry.status = 'loading';
+    entry.error = null;
+
+    try {
+      const proj = await api(`/project/${encodeURIComponent(slug)}`);
+      const versions = await api(`/project/${encodeURIComponent(proj.id)}/version`);
+      const data = buildModData(versions);
+
+      entry.proj = proj;
+      entry.data = data;
+      entry.status = 'ok';
+
+      // —— 更新检测 ——
+      const latest = data.latest;
+      if (latest) {
+        const prev = store.seen[slug];
+        entry.hasUpdate = !!(prev && prev.id && prev.id !== latest.id);
+        entry.prevNumber = prev ? prev.number : null;
+        store.seen[slug] = { id: latest.id, number: latest.version_number };
+        save();
+      }
+    } catch (err) {
+      entry.status = 'error';
+      entry.error = String((err && err.message) || err);
+    }
+
+    render();
+  }
+
+  async function refreshAll() {
+    if (!state.mods.length) return;
+    setStatus('正在检查更新…');
+    await Promise.all(state.mods.map(m => loadMod(m.slug)));
+
+    const ups = state.mods.filter(m => m.hasUpdate).length;
+    const errs = state.mods.filter(m => m.status === 'error').length;
+    let msg = ups ? `发现 ${ups} 个 mod 有更新` : '所有 mod 均为最新';
+    if (errs) msg += `（${errs} 个加载失败）`;
+    setStatus(msg, ups ? 'warn' : (errs ? 'warn' : 'ok'));
+  }
+
+  /* ============ 渲染 ============ */
+  function render() {
+    renderMcList();
+    renderMods();
+    renderFooter();
+  }
+
+  function getMcList() {
+    const map = new Map(); // mc -> 最新时间戳
+    for (const m of state.mods) {
+      if (!m.data) continue;
+      for (const e of m.data.recent) {
+        const t = e.date.getTime();
+        if (!map.has(e.mc) || map.get(e.mc) < t) map.set(e.mc, t);
+      }
+    }
+    return [...map.keys()].sort((a, b) => (map.get(b) - map.get(a)) || cmpMc(a, b));
+  }
+
+  function renderMcList() {
+    const el = $('mcList');
+    el.innerHTML = '';
+    const list = getMcList();
+
+    if (!list.length) {
+      const s = document.createElement('span');
+      s.className = 'muted';
+      s.textContent = '添加 mod 后会自动列出可选的 MC 版本';
+      el.appendChild(s);
+      return;
+    }
+
+    for (const mc of list) {
+      const c = document.createElement('button');
+      c.className = 'chip' + (state.selectedMc.has(mc) ? ' on' : '');
+      c.textContent = mc;
+      c.addEventListener('click', () => toggleMc(mc));
+      el.appendChild(c);
+    }
+  }
+
+  function renderMods() {
+    const el = $('modList');
+    el.innerHTML = '';
+
+    if (!state.mods.length) {
+      el.innerHTML = '<div class="empty">还没有添加任何 mod，在上方输入 Modrinth 链接试试</div>';
+      return;
+    }
+
+    for (const m of state.mods) {
+      el.appendChild(buildCard(m));
+    }
+  }
+
+  function buildCard(m) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (m.hasUpdate) card.classList.add('has-update');
+    if (state.selectedMods.has(m.slug)) card.classList.add('selected');
+
+    /* ---- 头部 ---- */
+    const head = document.createElement('div');
+    head.className = 'card-head';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = state.selectedMods.has(m.slug);
+    cb.disabled = m.status !== 'ok';
+    cb.title = '选择此 mod';
+    cb.addEventListener('change', () => {
+      if (cb.checked) state.selectedMods.add(m.slug);
+      else state.selectedMods.delete(m.slug);
+      renderMods();
+      renderFooter();
+    });
+    head.appendChild(cb);
+
+    const icon = document.createElement('img');
+    icon.className = 'icon';
+    icon.alt = '';
+    icon.loading = 'lazy';
+    icon.src = (m.proj && m.proj.icon_url) || PLACEHOLDER;
+    icon.addEventListener('error', () => { icon.src = PLACEHOLDER; });
+    head.appendChild(icon);
+
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = (m.proj && m.proj.title) || m.slug;
+    title.title = title.textContent;
+    meta.appendChild(title);
+
+    const sub = document.createElement('div');
+    sub.className = 'card-sub';
+    if (m.status === 'loading') {
+      sub.textContent = '检查中…';
+    } else if (m.status === 'error') {
+      sub.innerHTML = `<span class="err">加载失败：${escapeHtml(m.error)}</span>`;
+    } else if (m.data && m.data.latest) {
+      sub.textContent = `最新 ${m.data.latest.version_number} · ${fmtDate(m.data.latest.date_published)}`;
+    } else {
+      sub.textContent = '暂无版本';
+    }
+    meta.appendChild(sub);
+    head.appendChild(meta);
+
+    if (m.hasUpdate) {
+      const b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = m.prevNumber ? `有更新 ← ${m.prevNumber}` : '有更新';
+      head.appendChild(b);
+    }
+
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.textContent = '×';
+    del.title = '移除';
+    del.addEventListener('click', () => removeMod(m.slug));
+    head.appendChild(del);
+
+    card.appendChild(head);
+
+    /* ---- 版本行 ---- */
+    const rows = document.createElement('div');
+    rows.className = 'rows';
+
+    if (m.data && m.data.recent.length) {
+      const lbl = document.createElement('div');
+      lbl.className = 'rows-label';
+      lbl.textContent = `最近 ${m.data.recent.length} 个 MC 版本`;
+      rows.appendChild(lbl);
+
+      for (const e of m.data.recent) {
+        rows.appendChild(buildVersionRow(e));
+      }
+    }
+    card.appendChild(rows);
+
+    return card;
+  }
+
+  function buildVersionRow(e) {
+    const row = document.createElement('div');
+    row.className = 'vrow' + (state.selectedMc.has(e.mc) ? ' on' : '');
+    row.title = '点击选中/取消该 MC 版本';
+
+    const mc = document.createElement('span');
+    mc.className = 'vmc';
+    mc.textContent = e.mc;
+
+    const vn = document.createElement('span');
+    vn.className = 'vnum';
+    vn.textContent = e.version.version_number;
+    vn.title = e.version.version_number;
+
+    const vt = document.createElement('span');
+    vt.className = 'vtype ' + (e.version.version_type || 'release');
+    vt.textContent = e.version.version_type || 'release';
+
+    const vd = document.createElement('span');
+    vd.className = 'vdate';
+    vd.textContent = fmtDate(e.version.date_published);
+
+    row.append(mc, vn, vt, vd);
+    row.addEventListener('click', () => toggleMc(e.mc));
+    return row;
+  }
+
+  function renderFooter() {
+    const loaded = state.mods.filter(m => m.status === 'ok');
+    const n = state.mods.filter(m => state.selectedMods.has(m.slug)).length;
+    const mcN = state.selectedMc.size;
+
+    $('selInfo').textContent = `已选 ${n} 个 mod · ${mcN} 个 MC 版本`;
+    $('downloadBtn').disabled = !(n && mcN);
+
+    const allSel = loaded.length > 0 && loaded.every(m => state.selectedMods.has(m.slug));
+    $('selectAll').checked = allSel;
+    $('selectAll').disabled = loaded.length === 0;
+  }
+
+  /* ============ 交互 ============ */
+  function toggleMc(mc) {
+    if (state.selectedMc.has(mc)) state.selectedMc.delete(mc);
+    else state.selectedMc.add(mc);
+    render();
+  }
+
+  function parseInput(raw) {
+    raw = (raw || '').trim();
+    if (!raw) return null;
+
+    const urlMatch = raw.match(
+      /modrinth\.com\/(?:mod|plugin|datapack|resourcepack|shader|modpack|project)\/([^\/?#\s]+)/i
+    );
+    if (urlMatch) return urlMatch[1].toLowerCase();
+
+    if (/^[a-zA-Z0-9][a-zA-Z0-9\-_]{0,63}$/.test(raw)) return raw.toLowerCase();
+
+    return null;
+  }
+
+  function addMod(slug) {
+    if (state.mods.some(m => m.slug === slug)) {
+      setStatus(`「${slug}」已经在列表里了`, 'warn');
+      return;
+    }
+    state.mods.push({
+      slug,
+      status: 'loading',
+      proj: null,
+      data: null,
+      error: null,
+      hasUpdate: false,
+      prevNumber: null,
+    });
+    save();
+    render();
+    loadMod(slug);
+  }
+
+  function removeMod(slug) {
+    state.mods = state.mods.filter(m => m.slug !== slug);
+    state.selectedMods.delete(slug);
+    delete store.seen[slug];
+    save();
+    render();
+  }
+
+  /* ============ 下载 ============ */
+  function triggerDownload(href, filename) {
+    const a = document.createElement('a');
+    a.href = href;
+    if (filename) a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 0);
+  }
+
+  async function downloadOne(url, filename) {
+    try {
+      // 先尝试 fetch 成 blob，这样能保证文件名正确
+      const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      triggerDownload(objUrl, filename);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 60000);
+    } catch (e) {
+      // 跨域失败时回退到直接跳转（浏览器一般会直接下载 .jar）
+      triggerDownload(url, filename);
+    }
+  }
+
+  async function doDownload() {
+    const btn = $('downloadBtn');
+    const mods = state.mods.filter(m => m.status === 'ok' && state.selectedMods.has(m.slug));
+    const mcs = [...state.selectedMc];
+
+    if (!mods.length) return setStatus('请先勾选至少一个 mod', 'warn');
+    if (!mcs.length) return setStatus('请先勾选至少一个 MC 版本', 'warn');
+
+    const jobs = [];
+    const skipped = [];
+
+    for (const m of mods) {
+      for (const mc of mcs) {
+        const v = m.data.mcMap.get(mc);
+        const file = pickFile(v);
+        if (!v || !file) {
+          skipped.push(`${m.proj.title}@${mc}`);
+          continue;
+        }
+        jobs.push({
+          url: file.url,
+          filename: file.filename,
+          label: `${m.proj.title} ${mc} · ${v.version_number}`,
+        });
+      }
+    }
+
+    if (!jobs.length) {
+      return setStatus('所选 MC 版本下这些 mod 都没有对应文件', 'warn');
+    }
+
+    btn.disabled = true;
+    setStatus(
+      `开始下载 ${jobs.length} 个文件…（若浏览器询问"是否允许多个下载"，请点击允许）`
+    );
+
+    let ok = 0, fail = 0;
+    for (let i = 0; i < jobs.length; i++) {
+      const job = jobs[i];
+      setStatus(`下载中 ${i + 1}/${jobs.length}：${job.label}`);
+      try {
+        await downloadOne(job.url, job.filename);
+        ok++;
+      } catch (e) {
+        fail++;
+      }
+      await sleep(450); // 间隔一下，避免被浏览器拦截
+    }
+
+    let msg = `完成：成功 ${ok} 个`;
+    if (fail) msg += `，失败 ${fail} 个`;
+    if (skipped.length) msg += `；跳过 ${skipped.length} 个（无对应版本）：${skipped.join('、')}`;
+    setStatus(msg, fail || skipped.length ? 'warn' : 'ok');
+
+    renderFooter();
+  }
+
+  /* ============ 事件绑定 ============ */
+  $('addBtn').addEventListener('click', () => {
+    const raw = $('modInput').value;
+    const slug = parseInput(raw);
+    if (!slug) {
+      setStatus('无法识别该链接，请使用 Modrinth 的 mod 链接或 slug', 'warn');
+      return;
+    }
+    $('modInput').value = '';
+    setStatus('');
+    addMod(slug);
+  });
+
+  $('modInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') $('addBtn').click();
+  });
+
+  $('refreshBtn').addEventListener('click', refreshAll);
+
+  $('clearMc').addEventListener('click', () => {
+    state.selectedMc.clear();
+    render();
+  });
+
+  $('selectAll').addEventListener('change', e => {
+    const on = e.target.checked;
+    state.selectedMods.clear();
+    if (on) {
+      for (const m of state.mods) if (m.status === 'ok') state.selectedMods.add(m.slug);
+    }
+    renderMods();
+    renderFooter();
+  });
+
+  $('downloadBtn').addEventListener('click', doDownload);
+
+  /* ============ 启动 ============ */
+  function init() {
+    let cfg = null;
+    try { cfg = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { /* 忽略 */ }
+
+    store.seen = (cfg && cfg.seen) || {};
+    const slugs = (cfg && Array.isArray(cfg.slugs) && cfg.slugs.length)
+      ? cfg.slugs
+      : DEFAULT_MODS.slice();
+
+    for (const slug of slugs) {
+      state.mods.push({
+        slug,
+        status: 'loading',
+        proj: null,
+        data: null,
+        error: null,
+        hasUpdate: false,
+        prevNumber: null,
+      });
+    }
+
+    render();
+    refreshAll();  // 打开页面自动检查更新
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

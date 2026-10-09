@@ -55,7 +55,7 @@
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
   .panel-title { font-size: 12px; color: #8b93a7; letter-spacing: .8px; text-transform: uppercase; }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .chip {
     padding: 6px 13px; border-radius: 999px; border: 1px solid #2a2f3a;
     background: #1b1f28; color: #b6bdcb; cursor: pointer; font-size: 13px;
@@ -64,6 +64,24 @@
   }
   .chip:hover { border-color: #3f4a5e; color: #e6e8ee; }
   .chip.on { background: #16291f; border-color: #2f7a52; color: #6ee7a8; }
+
+  /* 集合（自定义分类）按钮：紫色调，与类型按钮区分 */
+  .chip.collection {
+    background: #1c1a2e;
+    border-color: #3a2d6b;
+    color: #c4b5fd;
+  }
+  .chip.collection:hover { background: #252240; border-color: #5b3fb8; color: #ddd6fe; }
+  .chip.collection.on {
+    background: #2d1e60;
+    border-color: #8b5cf6;
+    color: #e9d5ff;
+    box-shadow: 0 0 0 1px #8b5cf6 inset;
+  }
+  .chip-sep {
+    width: 1px; align-self: stretch; min-height: 22px;
+    background: #2a2f3a; margin: 0 2px;
+  }
 
   /* ==== 布局工具栏 ==== */
   .toolbar {
@@ -83,10 +101,23 @@
   .seg-btn:hover { background: #232833; color: #e6e8ee; }
   .seg-btn.on { background: #2563eb; color: #fff; }
 
-  /* ==== 其他版本输入（仅列表模式显示）==== */
+  /* ==== 搜索框 ==== */
+  .search-wrap {
+    display: flex; align-items: center; gap: 6px;
+    margin-left: auto;
+  }
+  .search-input {
+    width: 180px; padding: 5px 10px; border-radius: 7px;
+    border: 1px solid #262b36; background: #1b1f28; color: #e6e8ee;
+    font-size: 12.5px; font-family: inherit;
+    outline: none; transition: border-color .15s;
+  }
+  .search-input:focus { border-color: #2563eb; }
+  .search-input::placeholder { color: #5f6779; }
+
+  /* ==== 其他版本输入 ==== */
   .custom-keys {
     display: flex; align-items: center; gap: 8px;
-    margin-left: auto;
   }
   .ck-label { font-size: 12px; color: #8b93a7; letter-spacing: .3px; }
   .ck-input {
@@ -143,7 +174,7 @@
   }
   .del:hover { background: #2a1a1a; color: #f16a6a; }
 
-  /* ==== 链接按钮行（Modrinth / MC百科搜索） ==== */
+  /* ==== 链接按钮行 ==== */
   .link-row {
     display: flex; gap: 6px; flex-wrap: wrap;
     margin-top: 10px;
@@ -324,6 +355,8 @@
     .mods.list .item { flex-wrap: wrap; }
     .row-keys { max-width: 100%; justify-content: flex-start; }
     .custom-keys { margin-left: 0; }
+    .search-wrap { margin-left: 0; width: 100%; }
+    .search-input { flex: 1; width: auto; }
   }
 </style>
 </head>
@@ -346,8 +379,8 @@
 
   <section class="panel">
     <div class="panel-head">
-      <span class="panel-title">项目类型</span>
-      <button id="clearType" class="btn tiny ghost">清空</button>
+      <span class="panel-title">项目类型 / 自定义分类</span>
+      <button id="clearType" class="btn tiny ghost">清空筛选</button>
     </div>
     <div id="typeList" class="chips"></div>
   </section>
@@ -373,6 +406,12 @@
     <div class="seg">
       <button class="seg-btn on" data-layout="grid">卡片</button>
       <button class="seg-btn" data-layout="list">列表</button>
+    </div>
+
+    <div class="search-wrap">
+      <input id="searchInput" class="search-input" type="text"
+             placeholder="搜索项目名称 / slug" autocomplete="off">
+      <button id="searchClearBtn" class="btn tiny ghost" title="清空搜索" style="display:none;">×</button>
     </div>
 
     <div id="customKeysWrap" class="custom-keys" style="display:none;">
@@ -459,12 +498,14 @@
 
   /* ============ 配置 ============ */
   const API = 'https://api.modrinth.com/v2';
-  const LS_KEY = 'mod-checker-v6';
+  const LS_KEY = 'mod-checker-v8';
   const MC_RE = /^\d+\.\d+(\.\d+)?$/;
   const RECENT_COUNT = 3;
   const SHADER_RECENT_COUNT = 10;
   const LIST_RECENT_COUNT = 3;
   const CUSTOM_SLOTS = 2;
+
+  const TYPE_ORDER = { mod: 0, shader: 1, resourcepack: 2, modpack: 3 };
 
   const TYPE_META = {
     mod:          { label: 'Mod',    dir: 'mods/' },
@@ -480,6 +521,11 @@
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E" +
     "%3Crect width='48' height='48' rx='10' fill='%23222835'/%3E%3C/svg%3E";
 
+  const collator = new Intl.Collator(['zh-Hans-CN', 'zh', 'en'], {
+    sensitivity: 'base',
+    numeric: true,
+  });
+
   /* ============ 状态 ============ */
   const state = {
     mods: [],
@@ -489,8 +535,11 @@
     selectedTypes: new Set(),
     layout: 'grid',
     customKeys: new Array(CUSTOM_SLOTS).fill(''),
+    collections: {},              // { name: Set<slug> }
+    activeCollection: null,       // null = 显示全部
   };
   let store = { seen: {} };
+  let searchKeyword = '';
 
   /* ============ 工具 ============ */
   const $ = id => document.getElementById(id);
@@ -535,6 +584,41 @@
     return res.json();
   }
 
+  /* ============ 排序 / 筛选 ============ */
+  function sortMods(list) {
+    return list.slice().sort((a, b) => {
+      const ta = (a.type && TYPE_ORDER[a.type] != null) ? TYPE_ORDER[a.type] : 99;
+      const tb = (b.type && TYPE_ORDER[b.type] != null) ? TYPE_ORDER[b.type] : 99;
+      if (ta !== tb) return ta - tb;
+      const na = (a.proj && a.proj.title) || a.slug || '';
+      const nb = (b.proj && b.proj.title) || b.slug || '';
+      return collator.compare(na, nb);
+    });
+  }
+
+  function matchSearch(m) {
+    if (!searchKeyword) return true;
+    const kw = searchKeyword.toLowerCase();
+    const title = ((m.proj && m.proj.title) || '').toLowerCase();
+    const slug = (m.slug || '').toLowerCase();
+    return title.includes(kw) || slug.includes(kw);
+  }
+
+  function matchType(m) {
+    if (state.selectedTypes.size === 0) return true;
+    return state.selectedTypes.has(m.type);
+  }
+
+  function matchCollection(m) {
+    if (state.activeCollection === null) return true;
+    const set = state.collections[state.activeCollection];
+    return !!(set && set.has(m.slug));
+  }
+
+  function getVisibleMods() {
+    return state.mods.filter(m => matchType(m) && matchCollection(m) && matchSearch(m));
+  }
+
   /* ============ 链接生成 ============ */
   function buildModrinthUrl(m) {
     if (!m.proj || !m.proj.slug) return null;
@@ -542,7 +626,6 @@
     return `https://modrinth.com/${t}/${m.proj.slug}`;
   }
 
-  // MC百科搜索：直接跳转到搜索页并填充项目名称
   function buildWikiUrl(m) {
     if (!m.proj) return null;
     const kw = m.proj.title || m.proj.slug || m.slug;
@@ -618,6 +701,100 @@
     return version.files.find(f => f.primary) || version.files[0];
   }
 
+  /* ============ pack.json 解析与序列化 ============ */
+  // 支持：
+  //   1) 旧格式 ["sodium", ...]
+  //   2) 新格式 { mod:[], shader:[], resourcepack:[], modpack:[] }
+  //   3) 新格式 + collections: { 名称: { mod:[], shader:[], ... } }
+  function parsePackJson(data) {
+    const result = {
+      items: [],
+      collections: {},
+    };
+
+    function pushItem(slug, type) {
+      if (typeof slug !== 'string' || !slug.trim()) return;
+      result.items.push({ slug: slug.trim().toLowerCase(), type: type || null });
+    }
+
+    if (Array.isArray(data)) {
+      for (const s of data) pushItem(s, null);
+      return result;
+    }
+
+    if (!data || typeof data !== 'object') return result;
+
+    for (const t of ['mod', 'shader', 'resourcepack', 'modpack']) {
+      const arr = data[t];
+      if (Array.isArray(arr)) {
+        for (const s of arr) pushItem(s, t);
+      }
+    }
+
+    if (data.collections && typeof data.collections === 'object' && !Array.isArray(data.collections)) {
+      for (const [name, group] of Object.entries(data.collections)) {
+        if (!name || typeof name !== 'string') continue;
+        const set = new Set();
+        if (Array.isArray(group)) {
+          for (const s of group) {
+            if (typeof s === 'string' && s.trim()) set.add(s.trim().toLowerCase());
+          }
+        } else if (group && typeof group === 'object') {
+          for (const t of ['mod', 'shader', 'resourcepack', 'modpack']) {
+            const arr = group[t];
+            if (Array.isArray(arr)) {
+              for (const s of arr) {
+                if (typeof s === 'string' && s.trim()) set.add(s.trim().toLowerCase());
+              }
+            }
+          }
+        }
+        if (set.size > 0) result.collections[name] = set;
+      }
+    }
+
+    return result;
+  }
+
+  function serializePackJson() {
+    const grouped = { mod: [], shader: [], resourcepack: [], modpack: [] };
+
+    // 默认列表：按当前排序输出
+    const ordered = sortMods(state.mods);
+    for (const m of ordered) {
+      const t = (m.type && grouped[m.type] !== undefined) ? m.type : 'mod';
+      grouped[t].push(m.slug);
+    }
+
+    const out = {
+      mod: grouped.mod,
+      shader: grouped.shader,
+      resourcepack: grouped.resourcepack,
+      modpack: grouped.modpack,
+    };
+
+    if (Object.keys(state.collections).length > 0) {
+      // 建立 slug -> type 映射（用当前已加载数据）
+      const typeOf = new Map();
+      for (const m of state.mods) typeOf.set(m.slug, m.type);
+
+      out.collections = {};
+      for (const [name, set] of Object.entries(state.collections)) {
+        const cg = { mod: [], shader: [], resourcepack: [], modpack: [] };
+        // 按 slug 排序，稳定输出
+        const slugs = [...set].sort();
+        for (const slug of slugs) {
+          const t = typeOf.get(slug);
+          const key = (t && cg[t] !== undefined) ? t : 'mod';
+          cg[key].push(slug);
+        }
+        out.collections[name] = cg;
+      }
+    }
+
+    return JSON.stringify(out, null, 2) + '\n';
+  }
+
   /* ============ 持久化 ============ */
   function save() {
     try {
@@ -679,7 +856,7 @@
 
   /* ============ 渲染 ============ */
   function render() {
-    renderTypeList();
+    renderTypeAndCollections();
     renderMcList();
     renderLoaderList();
     renderMods();
@@ -687,14 +864,50 @@
     syncLayoutUI();
   }
 
-  function renderTypeList() {
+  function renderTypeAndCollections() {
     const el = $('typeList');
     el.innerHTML = '';
+
+    // 类型按钮
     for (const [key, meta] of Object.entries(TYPE_META)) {
       const c = document.createElement('button');
       c.className = 'chip' + (state.selectedTypes.has(key) ? ' on' : '');
       c.textContent = meta.label;
+      c.title = `仅显示类型：${meta.label}`;
       c.addEventListener('click', () => toggleType(key));
+      el.appendChild(c);
+    }
+
+    // 集合按钮
+    const names = Object.keys(state.collections);
+    if (names.length === 0) return;
+
+    // 分隔线
+    const sep = document.createElement('span');
+    sep.className = 'chip-sep';
+    el.appendChild(sep);
+
+    // 「全部」
+    const allChip = document.createElement('button');
+    allChip.className = 'chip collection' + (state.activeCollection === null ? ' on' : '');
+    allChip.textContent = '全部';
+    allChip.title = '显示所有项目';
+    allChip.addEventListener('click', () => {
+      state.activeCollection = null;
+      render();
+    });
+    el.appendChild(allChip);
+
+    // 各集合
+    for (const name of names) {
+      const c = document.createElement('button');
+      c.className = 'chip collection' + (state.activeCollection === name ? ' on' : '');
+      c.textContent = name;
+      c.title = `仅显示「${name}」分类内的项目（${state.collections[name].size} 项）`;
+      c.addEventListener('click', () => {
+        state.activeCollection = (state.activeCollection === name) ? null : name;
+        render();
+      });
       el.appendChild(c);
     }
   }
@@ -767,11 +980,6 @@
     }
   }
 
-  function isVisible(m) {
-    if (state.selectedTypes.size === 0) return true;
-    return state.selectedTypes.has(m.type);
-  }
-
   function renderMods() {
     const el = $('modList');
     el.className = 'mods' + (state.layout === 'list' ? ' list' : '');
@@ -782,9 +990,17 @@
       return;
     }
 
-    const visible = state.mods.filter(isVisible);
+    const visible = sortMods(getVisibleMods());
+
     if (!visible.length) {
-      el.innerHTML = '<div class="empty">当前类型筛选条件下没有可显示的项目</div>';
+      if (state.activeCollection !== null && state.collections[state.activeCollection]) {
+        const n = state.collections[state.activeCollection].size;
+        el.innerHTML = `<div class="empty">分类「${escapeHtml(state.activeCollection)}」（${n} 项）下没有匹配当前筛选的项目<br>试试清空类型筛选或搜索关键词</div>`;
+      } else if (searchKeyword) {
+        el.innerHTML = `<div class="empty">没有匹配「${escapeHtml(searchKeyword)}」的项目</div>`;
+      } else {
+        el.innerHTML = '<div class="empty">当前筛选条件下没有可显示的项目</div>';
+      }
       return;
     }
 
@@ -863,7 +1079,6 @@
 
     card.appendChild(head);
 
-    // 链接按钮行
     const linkRow = document.createElement('div');
     linkRow.className = 'link-row';
     if (buildLinkButtons(m, linkRow)) {
@@ -970,7 +1185,6 @@
     main.appendChild(sub);
     item.appendChild(main);
 
-    // 链接按钮
     const linkRow = document.createElement('div');
     linkRow.className = 'row-links';
     if (buildLinkButtons(m, linkRow)) {
@@ -1049,7 +1263,7 @@
   }
 
   function renderFooter() {
-    const visibleLoaded = state.mods.filter(isVisible).filter(m => m.status === 'ok');
+    const visibleLoaded = getVisibleMods().filter(m => m.status === 'ok');
     const n = state.mods.filter(m => state.selectedMods.has(m.slug)).length;
     const mcN = state.selectedMc.size;
     const ldN = state.selectedLoaders.size;
@@ -1232,13 +1446,17 @@
       setStatus('列表为空，没有可导出的项目', 'warn');
       return;
     }
-    const slugs = state.mods.map(m => m.slug);
-    const content = JSON.stringify(slugs, null, 2) + '\n';
+    const content = serializePackJson();
     const blob = new Blob([content], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     triggerDownload(url, 'pack.json');
     setTimeout(() => URL.revokeObjectURL(url), 60000);
-    setStatus(`已导出 pack.json（共 ${slugs.length} 个项目）`, 'ok');
+
+    const collCount = Object.keys(state.collections).length;
+    let msg = `已导出 pack.json（共 ${state.mods.length} 个项目`;
+    if (collCount) msg += `，${collCount} 个分类`;
+    msg += '）';
+    setStatus(msg, 'ok');
   }
 
   /* ============ 导出 .mrpack ============ */
@@ -1432,6 +1650,7 @@
 
   $('clearType').addEventListener('click', () => {
     state.selectedTypes.clear();
+    state.activeCollection = null;
     render();
   });
 
@@ -1447,7 +1666,7 @@
 
   $('selectAll').addEventListener('change', e => {
     const on = e.target.checked;
-    const visible = state.mods.filter(isVisible);
+    const visible = getVisibleMods();
     if (on) {
       for (const m of visible) if (m.status === 'ok') state.selectedMods.add(m.slug);
     } else {
@@ -1465,6 +1684,20 @@
 
   document.querySelectorAll('.seg-btn').forEach(btn => {
     btn.addEventListener('click', () => setLayout(btn.dataset.layout));
+  });
+
+  $('searchInput').addEventListener('input', e => {
+    searchKeyword = e.target.value.trim();
+    $('searchClearBtn').style.display = searchKeyword ? 'inline-flex' : 'none';
+    renderMods();
+  });
+
+  $('searchClearBtn').addEventListener('click', () => {
+    searchKeyword = '';
+    $('searchInput').value = '';
+    $('searchClearBtn').style.display = 'none';
+    renderMods();
+    $('searchInput').focus();
   });
 
   document.querySelectorAll('.ck-input').forEach(input => {
@@ -1506,36 +1739,54 @@
       input.value = state.customKeys[slot] || '';
     });
 
-    let slugs = (cfg && Array.isArray(cfg.slugs) && cfg.slugs.length) ? cfg.slugs : null;
-
-    if (!slugs) {
-      try {
-        const res = await fetch(PACK_JSON_URL, { cache: 'no-store' });
-        if (res.ok) {
-          const arr = await res.json();
-          if (Array.isArray(arr)) slugs = arr;
-        }
-      } catch (e) {
-        console.warn('加载 pack.json 失败:', e);
-      }
+    // 始终尝试读取 pack.json（获取 collections）
+    let packJsonData = null;
+    try {
+      const res = await fetch(PACK_JSON_URL, { cache: 'no-store' });
+      if (res.ok) packJsonData = await res.json();
+    } catch (e) {
+      console.warn('加载 pack.json 失败:', e);
     }
 
-    if (!slugs || !slugs.length) slugs = FALLBACK_MODS.slice();
+    const parsed = packJsonData ? parsePackJson(packJsonData) : { items: [], collections: {} };
 
-    slugs = slugs
-      .filter(s => typeof s === 'string' && s.trim())
-      .map(s => s.trim().toLowerCase());
+    // collections
+    state.collections = parsed.collections || {};
 
-    for (const slug of slugs) {
+    // 项目列表来源：localStorage > pack.json > fallback
+    let items = null;
+
+    if (cfg && Array.isArray(cfg.slugs) && cfg.slugs.length) {
+      items = cfg.slugs
+        .filter(s => typeof s === 'string' && s.trim())
+        .map(s => ({ slug: s.trim().toLowerCase(), type: null }));
+    } else if (parsed.items.length) {
+      items = parsed.items;
+    } else {
+      items = FALLBACK_MODS.map(s => ({ slug: s, type: null }));
+    }
+
+    // 合并 collections 里的 slug（保证分类下项目始终能被加载）
+    if (Object.keys(state.collections).length > 0) {
+      const map = new Map(items.map(it => [it.slug, it]));
+      for (const set of Object.values(state.collections)) {
+        for (const slug of set) {
+          if (!map.has(slug)) map.set(slug, { slug, type: null });
+        }
+      }
+      items = [...map.values()];
+    }
+
+    for (const it of items) {
       state.mods.push({
-        slug,
+        slug: it.slug,
         status: 'loading',
         proj: null,
         data: null,
         error: null,
         hasUpdate: false,
         prevNumber: null,
-        type: null,
+        type: it.type,
       });
     }
 

@@ -21,23 +21,40 @@
     "zombie-invade-100-days"
   ],
 
-  "collections": {
+  "primary": "inf",
+  
+  "collections": { 
     "inf": {
-      "mod": ["carpet-tis-addition",
-      "cloth-config",
-      "continuity",
-      "fabric-api",
-      "iris",
-      "lithium",
-      "modmenu",
-      "sodium"],
-      "shader": ["complementary-reimagined"],
-      "resourcepack": ["xk-redstone-display"],
-    "modpack": ["zombie-invade-100-days"]
+      "mod": [
+        "chat-heads",
+        "iris",
+        "modmenu",
+        "sodium"
+      ],
+      "shader": [],
+      "resourcepack": [],
+      "modpack": []
     },
     "cy用": {
-      "mod": ["sodium", "iris"],
-      "resourcepack": ["xk-redstone-display"]
+      "mod": [
+        "carpet-tis-addition",
+        "cloth-config",
+        "continuity",
+        "fabric-api",
+        "iris",
+        "lithium",
+        "modmenu",
+        "sodium"
+      ],
+      "shader": [
+        "complementary-reimagined"
+      ],
+      "resourcepack": [
+        "xk-redstone-display"
+      ],
+      "modpack": [
+        "zombie-invade-100-days"
+      ]
     }
-}
+  }
 }

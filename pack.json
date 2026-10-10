@@ -1,15 +1,31 @@
 {
   "mod": [
+    "anti-xray",
     "appleskin",
+    "bluemap",
+    "carpet",
+    "carpet-ams-addition",
     "carpet-tis-addition",
     "chat-heads",
     "cloth-config",
     "continuity",
+    "debugify",
     "fabric-api",
+    "fabric-language-kotlin",
+    "fabricproxy-lite",
+    "ferrite-core",
     "iris",
+    "krypton",
+    "ledger",
     "lithium",
+    "luckperms",
     "modmenu",
-    "sodium"
+    "no-chat-reports",
+    "servux",
+    "sodium",
+    "spark",
+    "tabtps",
+    "vanilla-permissions"
   ],
   "shader": [
     "complementary-reimagined"
@@ -20,16 +36,29 @@
   "modpack": [
     "zombie-invade-100-days"
   ],
-
   "primary": "inf",
-  
-  "collections": { 
+  "collections": {
     "inf": {
       "mod": [
-        "chat-heads",
-        "iris",
-        "modmenu",
-        "sodium"
+        "anti-xray",
+        "bluemap",
+        "carpet",
+        "carpet-ams-addition",
+        "carpet-tis-addition",
+        "debugify",
+        "fabric-api",
+        "fabric-language-kotlin",
+        "fabricproxy-lite",
+        "ferrite-core",
+        "krypton",
+        "ledger",
+        "lithium",
+        "luckperms",
+        "no-chat-reports",
+        "servux",
+        "spark",
+        "tabtps",
+        "vanilla-permissions"
       ],
       "shader": [],
       "resourcepack": [],
@@ -55,6 +84,31 @@
       "modpack": [
         "zombie-invade-100-days"
       ]
+    },
+    "test": {
+      "mod": [
+        "anti-xray",
+        "bluemap",
+        "carpet-ams-addition",
+        "carpet-tis-addition",
+        "debugify",
+        "fabric-api",
+        "fabric-language-kotlin",
+        "fabricproxy-lite",
+        "ferrite-core",
+        "krypton",
+        "ledger",
+        "lithium",
+        "luckperms",
+        "no-chat-reports",
+        "servux",
+        "spark",
+        "tabtps",
+        "vanilla-permissions"
+      ],
+      "shader": [],
+      "resourcepack": [],
+      "modpack": []
     }
   }
 }
